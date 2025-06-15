@@ -68,7 +68,7 @@ def cancel():
     """Реакция на кнопку отмены поиска"""
 
     # Очищаем поле ввода
-    search_editor.delete(0)
+    search_editor.delete(0, tk.END)
 
     # Удаляем строки из таблицы
     for row in table.get_children():
@@ -96,13 +96,18 @@ def retrieve_rows(user_query=''):
 
     # Если задан пользовательский запрос
     if user_query:
-        # Добавляем условие на название фильма
-        query += f" WHERE `Title` LIKE ?"
-        params.append(f'%{user_query}%')
-
-        # Добавляем условие на описание фильма
-        query += f" OR `Overview` LIKE ?"
-        params.append(f'%{user_query}%')
+        # Добавляем условия поиска по всем полям
+        conditions = [
+            "`Title` LIKE ?",
+            "`Overview` LIKE ?",
+            "`Director` LIKE ?",
+            "`Star1` LIKE ?",
+            "`Star2` LIKE ?",
+            "`Star3` LIKE ?"
+        ]
+        query += " WHERE " + " OR ".join(conditions)
+        # Формируем параметры для всех условий
+        params = [f'%{user_query}%'] * len(conditions)
 
     # Выполняем запрос и возвращаем результат
     return get_query_results(query, params)
@@ -119,10 +124,7 @@ def get_query_results(sql_query, params):
 
     # Выполняем запрос
     cursor = connection.cursor()
-    # if params:
     cursor.execute(sql_query, params)
-    # else:
-    #     cursor.execute(sql_query)
 
     # Получаем результат запроса
     results = cursor.fetchall()
